@@ -39,22 +39,28 @@ build {
   provisioner "file" {
     source      = "default.txt"
     destination = "/home/ubuntu/default"
-  }
-
-  # Copiar el script setup-nginx.sh
-  provisioner "file" {
-    source      = "setup-nginx.sh"
-    destination = "/home/ubuntu/setup-nginx.sh"
   }  
 
-  # Ejecutar el script setup-nginx.sh
   provisioner "shell" {
     inline = [
-      "chmod +x /home/ubuntu/setup-nginx.sh",
-      "sudo /home/ubuntu/setup-nginx.sh"
+      "sudo apt update",
+      "sudo apt install -y nodejs nginx npm",
+      "sudo npm install pm2@latest -g",
+      "pm2 start hello.js",
+      "pm2 kill",
+      "pm2 startup systemd",
+      "sudo env PATH=$PATH:/usr/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu",
+      "pm2 save",
+      "sudo systemctl start pm2-ubuntu",
+      "sudo rm -f /etc/nginx/sites-available/default",
+      "sudo mv /home/ubuntu/default /etc/nginx/sites-available/default",
+      "sudo systemctl restart nginx"
     ]
   }
 
+  provisioner "shell" {
+    inline = ["echo This provisioner runs last"]
+  }
 }
 
 
